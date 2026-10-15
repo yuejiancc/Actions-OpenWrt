@@ -2,6 +2,9 @@
 
 # Actions-OpenWrt
 
+本机 A31 的 Wi-Fi 崩溃修复构建配置与使用说明见 [DRIVER-FIX.md](DRIVER-FIX.md)。
+默认构建匹配当前内核的驱动包；完整固件可在手动启动工作流时选择。
+
 [![LICENSE](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-square&label=LICENSE)](https://github.com/P3TERX/Actions-OpenWrt/blob/master/LICENSE)
 ![GitHub Stars](https://img.shields.io/github/stars/P3TERX/Actions-OpenWrt.svg?style=flat-square&label=Stars&logo=github)
 ![GitHub Forks](https://img.shields.io/github/forks/P3TERX/Actions-OpenWrt.svg?style=flat-square&label=Forks&logo=github)
