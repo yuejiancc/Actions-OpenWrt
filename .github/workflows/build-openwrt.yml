@@ -71,7 +71,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
 
       - name: Restore source download cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        id: downloads_cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: openwrt/dl
           key: mt7981-dl-${{ env.SOURCE_COMMIT }}-${{ hashFiles('.config', 'feeds.conf.default') }}
@@ -81,8 +82,16 @@ jobs:
         run: bash scripts/prepare-build.sh
 
       - name: Download sources
+        id: downloads
         working-directory: openwrt
         run: make download -j8 2>&1 | tee ../diagnostics/download.log
+
+      - name: Save downloads before subsequent compatibility checks
+        if: ${{ steps.downloads_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: openwrt/dl
+          key: ${{ steps.downloads_cache.outputs.cache-primary-key }}
 
       - name: Build host tools and cross compiler
         working-directory: openwrt
@@ -136,6 +145,8 @@ jobs:
           mkdir -p diagnostics
           test ! -f openwrt/.config || cp openwrt/.config diagnostics/resolved.config
           find openwrt/build_dir -path '*/linux-5.4.284/.config' -exec cp '{}' diagnostics/built-kernel.config \; 2>/dev/null || true
+          find openwrt/build_dir -path '*/linux-5.4.284/.config.set' -exec cp '{}' diagnostics/kernel.config.set \; 2>/dev/null || true
+          find openwrt/build_dir -path '*/linux-5.4.284/.vermagic' -exec cp '{}' diagnostics/kernel.vermagic \; 2>/dev/null || true
           df -h > diagnostics/disk-usage.txt
 
       - name: Upload diagnostics

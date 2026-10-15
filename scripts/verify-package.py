@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fail closed on ABI mismatch; inspect the packaged ELF, not just the source."""
 import hashlib
+import gzip
 import io
 import json
 import os
@@ -18,6 +19,26 @@ FUNC = 'rx_802_3_data_frm_announce'
 def require(condition, message):
     if not condition:
         raise RuntimeError(message)
+
+
+def kernel_config_changes(expected, actual):
+    def parse(text):
+        return dict(line.split('=', 1) for line in text.splitlines()
+                    if line.startswith('CONFIG_') and '=' in line)
+    baseline, built = parse(expected), parse(actual)
+    # Host compiler discovery metadata is not a target-kernel setting.
+    return [{'symbol': key, 'running': baseline.get(key, 'n'), 'built': built.get(key, 'n')}
+            for key in sorted(baseline.keys() | built.keys())
+            if key != 'CONFIG_PLUGIN_HOSTCC' and baseline.get(key, 'n') != built.get(key, 'n')]
+
+
+def verify_kernel_config():
+    baseline = gzip.decompress((ROOT / 'running-kernel.config.gz').read_bytes()).decode()
+    configs = list((ROOT / 'openwrt/build_dir').glob('*/linux-mediatek_mt7981/linux-5.4.284/.config'))
+    require(len(configs) == 1, 'Cannot uniquely locate the built kernel configuration')
+    changes = kernel_config_changes(baseline, configs[0].read_text())
+    (DIAG / 'kernel-config-diff.json').write_text(json.dumps(changes, indent=2) + '\n')
+    require(not changes, f'Built kernel differs from the running router: {changes}')
 
 
 def package_parts(blob):
@@ -94,6 +115,7 @@ def elf_report(blob, inspect_function=False):
 
 def main():
     DIAG.mkdir(exist_ok=True)
+    verify_kernel_config()
     packages = list((ROOT / 'openwrt/bin').rglob('kmod-mt_wifi_*.ipk'))
     require(len(packages) == 1, f'Expected one driver IPK, found {len(packages)}')
     package = packages[0]

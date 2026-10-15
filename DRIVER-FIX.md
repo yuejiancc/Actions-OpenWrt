@@ -7,6 +7,9 @@ KONKA KOMI A31 / E-Life ETR631-T / ETR635-U（mediatek/mt7981）。
 
 - 源码固定到 hanwckf/immortalwrt-mt798x 的 `ba554197ed7e252fd3c1ee023621e1d1d009d323`。
 - `.config` 来自当前路由器 `/etc/build.config`。
+- 显式保留当前内核已有的 `kmod-crypto-user`：导出配置经 `make defconfig` 展开后会丢失该依赖，
+  导致 `CONFIG_CRYPTO_USER_API_RNG` 和 `CONFIG_CRYPTO_USER_API_SKCIPHER` 两项从模块变为未启用。
+  #6 构建因此被 ABI 检查正确阻止；此处补齐实际配置，不修改或绕过内核兼容标识。
 - `feeds.conf.default` 固定到当前路由器 `/etc/build.feeds` 记录的四个提交。
 - Wi-Fi 驱动版本 7.6.7.3，包发布号由 1 升为 2。
 - 必须匹配内核依赖 `5.4.284-1-4c477d255c38d4ac64c5d98b9d3353e7`，

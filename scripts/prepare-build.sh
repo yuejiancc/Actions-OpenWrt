@@ -15,6 +15,7 @@ make defconfig
 grep -qx 'CONFIG_TARGET_mediatek_mt7981_DEVICE_konka_komi-a31=y' .config
 grep -qx 'CONFIG_MTK_MT_WIFI_DRIVER_VERSION_7673=y' .config
 grep -qx 'CONFIG_PACKAGE_kmod-mt_wifi=y' .config
+grep -qx 'CONFIG_PACKAGE_kmod-crypto-user=y' .config
 # Record the actual feed revisions and all local source changes.
 ./scripts/feeds list -s > ../diagnostics/resolved.feeds
 git diff > ../diagnostics/source-changes.patch
